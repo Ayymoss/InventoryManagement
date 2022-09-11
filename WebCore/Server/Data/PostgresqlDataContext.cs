@@ -11,7 +11,10 @@ public class PostgresqlDataContext : IdentityDbContext<ApplicationUser>
     {
     }
 
+    public DbSet<HostInformation> HostInformation { get; set; }
     public DbSet<ComputerInformation> ComputerInformation { get; set; }
+    public DbSet<Product> Product { get; set; }
+    public DbSet<Drive> Drive { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -27,7 +30,7 @@ public class PostgresqlDataContext : IdentityDbContext<ApplicationUser>
         };
 
         // Build seed for user SuperAdmin
-        var superAdminUser = new ApplicationUser()
+        var superAdminUser = new ApplicationUser
         {
             Id = Guid.NewGuid().ToString(),
             UserName = "SuperAdmin",

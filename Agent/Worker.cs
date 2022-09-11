@@ -1,8 +1,5 @@
-using System.Reflection;
-using System.Text.Json;
+using System.Net.Http.Json;
 using System.Timers;
-using InventoryManagement.Shared.Models;
-using Microsoft.Win32;
 using Timer = System.Timers.Timer;
 
 namespace InventoryManagement.Agent;
@@ -10,11 +7,13 @@ namespace InventoryManagement.Agent;
 public class Worker : BackgroundService
 {
     private readonly ILogger<Worker> _logger;
+    private readonly Configuration _configuration;
     private const string Name = "Inventory Management Worker";
 
-    public Worker(ILogger<Worker> logger)
+    public Worker(ILogger<Worker> logger, Configuration configuration)
     {
         _logger = logger;
+        _configuration = configuration;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -27,16 +26,15 @@ public class Worker : BackgroundService
     }
 
     private async void GetSystemInformation(object? source, ElapsedEventArgs e)
+    //private async void GetSystemInformation()
     {
-        var filePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
-            "ComputerInformation.json");
-        if (File.Exists(filePath)) File.Delete(filePath);
+        var computerInformation = new ComputerInformation(_configuration).GetComputerInformation();
 
-        var computerInformation = new ComputerInformation().GetComputerInformation();
-
-        await using var createStream = File.Create(filePath);
-        await JsonSerializer.SerializeAsync(createStream, computerInformation, new JsonSerializerOptions {WriteIndented = true});
-        await createStream.DisposeAsync();
+        var client = new HttpClient();
+        var response =
+            await client.PostAsJsonAsync($"http://{_configuration.Hostname}:5000/api/Host", computerInformation);
+        Console.WriteLine($"Server Response: {await response.Content.ReadAsStringAsync()}");
+        response.EnsureSuccessStatusCode();
     }
 
     public override Task StartAsync(CancellationToken cancellationToken)
