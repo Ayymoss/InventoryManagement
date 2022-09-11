@@ -1,0 +1,36 @@
+﻿@page "/"
+
+<PageTitle>Index</PageTitle>
+
+<AuthorizeView>
+    <Authorized>
+        <h1>Name: @context.User.Identity.Name</h1>
+        <p>Role: @_role</p>
+    </Authorized>
+    <Authorizing>
+        <h1>Checking autorization, please wait...</h1>
+    </Authorizing>
+    <NotAuthorized>
+        <h1>You are not signed in.</h1>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+
+    string _role;
+
+    [CascadingParameter]
+    Task<AuthenticationState> AuthenticationState { get; set; }
+
+    protected override async void OnInitialized()
+    {
+        var authState = await AuthenticationState;
+        if (authState != null)
+        {
+            _role = authState.User.IsInRole(nameof(RoleName.SuperAdmin)) 
+                ? nameof(RoleName.SuperAdmin) 
+                : nameof(RoleName.User);
+        }
+    }
+
+}
